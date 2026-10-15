@@ -128,7 +128,7 @@ function addImages(files){
  if(!selected.length){$('status').textContent='ไม่พบไฟล์ภาพ กรุณาคัดลอกตัวภาพหรือเลือกไฟล์ภาพ';return;}
  if(pictures.length+selected.length>10){$('status').textContent=`เพิ่มไม่ได้: มี ${pictures.length} ภาพแล้ว เพิ่มได้อีก ${10-pictures.length} ภาพต่อรอบ กรุณาลบภาพเดิมหรือเลือกให้น้อยลง`;return;}
  if(!allowImageChange())return;
- pictures.push(...selected.map((f,i)=>new File([f],`ภาพ-${pictures.length+i+1}-${f.name||'clipboard.png'}`,{type:f.type})));
+ pictures.push(...selected.map((f,i)=>new File([f],`image-${pictures.length+i+1}-${f.name||'clipboard.png'}`,{type:f.type})));
  resetResults();renderImages();
 }
 $('files').onchange=()=>{addImages($('files').files);$('files').value='';};
@@ -175,6 +175,13 @@ function readTable(data,source){
   else{
    // Padded service codes are distinct from single-digit machine numbers.
    services=line.filter(w=>/^(01|02|94)$/.test(w.text));
+   // A row number such as 94 is not the service. Use a nearby Ref.1 token
+   // to disambiguate the service when the header was cropped or unreadable.
+   if(services.length>1){
+    const reference1=line.filter(w=>/^[A-Za-z0-9]{8,24}$/.test(w.text)&&/[A-Za-z]/.test(w.text)&&/\d/.test(w.text));
+    const adjacent=services.filter(s=>reference1.some(r=>r.x0>=s.x1&&r.x0-s.x1<=Math.max(s.y1-s.y0,r.y1-r.y0)*4));
+    if(adjacent.length===1)services=adjacent;
+   }
   }
   const codes=[...new Set(services.map(w=>w.text.padStart(2,'0')))];
   const periods=[...new Set(months.map(w=>month(w.text)))];
@@ -185,7 +192,7 @@ function readTable(data,source){
   if(!services.length||services.some(w=>w.confidence<80))reasons.push('เลข Serv. ยังอ่านได้ไม่ชัด');
   const lowConfidence=reasons.length>0;if(lowConfidence)uncertain++;
   if(codes.length!==1){uncertain++;continue;}
-  if(periods.length!==1||months.some(w=>w.confidence<80)){
+  if(periods.length!==1){
    // A cropped or unreadable Ref.3 must not hide an otherwise clear reference.
    // Keep the month unknown; never infer a month from another row or image.
    if(periods.length>1)notes.push('พบหลายเดือนในแถวเดียวกัน จึงยังไม่นับเดือน');
@@ -195,6 +202,7 @@ function readTable(data,source){
    if(periods.length>1)uncertain++;
    continue;
   }
+  if(months.some(w=>w.confidence<80))notes.push('เดือนอ่านไม่ชัด ให้เทียบผลอ่านอีกครั้ง');
   result.push({serv:codes[0],ref2:ref.text,ref3:periods[0],source,uncertain:lowConfidence,reasons,notes,refBox:{x0:ref.x0,y0:ref.y0,x1:ref.x1,y1:ref.y1}});
  }
  return {rows:result,uncertain,mode:hasHeaders?'ตำแหน่งหัวคอลัมน์':'รูปแบบข้อมูลโดยไม่มีหัวตาราง'};
@@ -206,6 +214,23 @@ function reconcileReads(first,second){
  for(const key of new Set([...a.keys(),...b.keys()])){
   if(!a.has(key)||!b.has(key)){uncertain++;accepted.push(...(a.get(key)||b.get(key)).map(r=>({...r,uncertain:true,reasons:[...new Set([...(r.reasons||[]),'พบเลขนี้เพียงรอบเดียว ยังยืนยันซ้ำไม่ได้'])]})));continue;}
   const left=a.get(key),right=b.get(key),rightMonths=new Set(right.map(r=>r.ref3));
+  // Compare the same physical row. A second month on another row must not
+  // be discarded just because one OCR pass missed that entire row.
+  if([...left,...right].every(r=>r.refBox)){
+   const unused=new Set(right.map((_,i)=>i));
+   const single=r=>({...r,uncertain:true,reasons:[...new Set([...(r.reasons||[]),'พบเลขนี้เพียงรอบเดียว ยังยืนยันซ้ำไม่ได้'])]});
+   for(const l of left){
+    const center=r=>(r.refBox.y0+r.refBox.y1)/2;
+    const candidates=[...unused].filter(i=>Math.abs(center(l)-center(right[i]))<=Math.max(6,Math.min(l.refBox.y1-l.refBox.y0,right[i].refBox.y1-right[i].refBox.y0)*0.75)).sort((i,j)=>Math.abs(center(l)-center(right[i]))-Math.abs(center(l)-center(right[j])));
+    if(!candidates.length){accepted.push(single(l));uncertain++;continue;}
+    const i=candidates[0],r=right[i];unused.delete(i);
+    const notes=[...new Set([...(l.notes||[]),...(r.notes||[])])];
+    if(l.ref3!==r.ref3)notes.push('สองรอบอ่านเดือนไม่ตรงกัน จึงยังไม่ยืนยันเดือน');
+    accepted.push({...l,ref3:l.ref3===r.ref3?l.ref3:'',uncertain:l.uncertain||r.uncertain,reasons:[...new Set([...(l.reasons||[]),...(r.reasons||[])])],notes});
+   }
+   for(const i of unused){accepted.push(single(right[i]));uncertain++;}
+   continue;
+  }
   const matching=[...new Set(left.map(r=>r.ref3))].filter(m=>rightMonths.has(m));
   const both=[...left,...right],identityUncertain=both.some(r=>r.uncertain),reasons=[...new Set(both.flatMap(r=>r.reasons||[]))],notes=[...new Set(both.flatMap(r=>r.notes||[]))];
   for(const ref3 of matching)accepted.push({...left[0],ref3,uncertain:identityUncertain,reasons,notes});
@@ -249,6 +274,7 @@ async function addReferenceCrops(file,prepared,resultRows){
  }finally{original.close();}
 }
 $('scan').onclick=async()=>{
+ if(busy||!pictures.length)return;
  lock(true);let worker,index=0,failed=0,uncertain=0,added=0,read=0;
  try{await loadOCR();worker=await Tesseract.createWorker('eng',1,{logger:m=>{$('status').textContent=`ภาพ ${index+1}/${pictures.length}: ${m.status} ${Math.round((m.progress||0)*100)}%`;}});await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
  for(index=0;index<pictures.length;index++){
@@ -266,7 +292,11 @@ $('scan').onclick=async()=>{
  }
  $('status').textContent=`อ่านเทียบ 2 รอบเสร็จ • เพิ่มใหม่ ${added} รายการ • สะสม ${rows.length} รายการ • ไม่ทราบเดือน ${rows.filter(r=>!r.ref3).length} รายการ${failed?` • อ่านไม่สำเร็จ ${failed} ภาพ`:''}${!read?' • ชุดนี้ไม่พบรายการที่ระบุ Ref.2 และ Serv. ได้':''}`;
  }catch(error){$('status').textContent='อ่านภาพไม่ได้: '+error.message;}
- finally{try{if(worker)await worker.terminate();}finally{lock(false);}}
+ finally{
+  try{if(worker)await worker.terminate();}
+  catch(error){$('status').textContent+=' • ปิดตัวอ่านภาพไม่สำเร็จ กรุณารีเฟรชหน้า';}
+  finally{lock(false);}
+ }
 };
 $('pickImages').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!busy)$('files').click();}});
 $('service').onchange=update;$('months').onchange=update;
@@ -274,6 +304,7 @@ render();
 // Translate presentation only. OCR data, identifiers, and copy payloads stay unchanged.
 let language='th';
 const translations={
+ 'ปิดตัวอ่านภาพไม่สำเร็จ กรุณารีเฟรชหน้า':'Could not close the image reader. Please refresh the page.',
  'ดูภาพต้นฉบับใต้เลขเพื่อเทียบข้อมูล กดภาพเพื่อขยาย แล้วแตะตรงไหนก็ได้เพื่อปิด ลบภาพแล้วรายงานเดิมยังอยู่':'Compare the numbers with their original image crops. Tap an image to enlarge it, then tap anywhere to close. Removing images keeps the report.',
  'ขยายภาพเลขต้นฉบับ':'Enlarge the original number image',
  'เลข Ref.2 จากภาพต้นฉบับ':'Ref.2 from the original image',
@@ -359,6 +390,9 @@ const translations={
 };
 const translationPairs=Object.entries(translations).sort((a,b)=>b[0].length-a[0].length);
 function english(text){
+ // Match complete UI sentences before replacing their numeric fragments.
+ const trimmed=text.trim();
+ if(Object.prototype.hasOwnProperty.call(translations,trimmed))return text.replace(trimmed,translations[trimmed]);
  let value=text.replace(/คัดลอกแล้ว (\d+) ครั้ง/g,'Copied $1 times')
   .replace(/(\d+) กลุ่ม Ref\.2 ตามตัวกรอง/g,'$1 Ref.2 groups matching filters')
   .replace(/(\d+) เดือนที่อ่านได้/g,'$1 recognized months')
