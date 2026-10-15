@@ -15,7 +15,7 @@ Open `index.html` in a browser. Internet access is required to load OCR resource
 ## Privacy
 Images are processed in browser memory and are not uploaded to an application backend. OCR resources are loaded from external CDNs.
 
-🚀 Live Website: https://pattrawutsk.github.io/work_cs_social/
+<a href="https://pattrawutsk.github.io/work_cs_social/" target="_blank" rel="noopener noreferrer">🚀 Live Website</a>
 
 👤 Author
 Pattrawut Sukkaew
