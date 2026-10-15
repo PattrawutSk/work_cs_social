@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>อ่านข้อความจากภาพ | Image Text Reader</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#19304a;font:16px system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:30px 20px}h1{margin:0 0 8px}p{line-height:1.7}.card{background:white;padding:22px;border-radius:16px;margin:18px 0;box-shadow:0 3px 20px #1634500a}button,.upload{display:inline-block;border:0;border-radius:8px;padding:11px 16px;background:#086b9c;color:white;cursor:pointer;font:inherit}button.secondary{background:#e7eff6;color:#19304a}button:disabled{opacity:.45;cursor:default}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}small,.muted{color:#61758a}#images{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:18px}figure{margin:0}figure img{width:100%;max-height:250px;object-fit:contain;background:#eef2f7;cursor:zoom-in}figcaption{overflow-wrap:anywhere;font-size:13px}table{border-collapse:collapse;width:100%;text-align:left}td,th{padding:10px;border-bottom:1px solid #e1e8ef}th{background:#edf4fa}input[type=text],select,textarea{padding:9px;border:1px solid #b9cad9;border-radius:6px;font:inherit;max-width:100%}td input{width:100%;min-width:145px}td select{min-width:70px}.scroll{overflow:auto}textarea{width:100%;height:160px}#status{white-space:pre-wrap}#summary{font-size:20px;font-weight:600}.error{background:#fff1f0}a{color:#086b9c}label{line-height:1.6}dialog{max-width:95vw;max-height:95vh;border:0;border-radius:12px}dialog img{max-width:100%}#report td{font-variant-numeric:tabular-nums}
+body{background:linear-gradient(135deg,#edf5fa 0%,#f6f8fc 55%,#edf5f3 100%);color:#172d45}main{max-width:1320px;padding:40px 28px 64px}h1{font-size:34px;letter-spacing:-1px}h2{font-size:21px;margin:0 0 16px}.card{border:1px solid #e1e9f0;padding:26px;box-shadow:0 8px 32px #23486808;border-radius:20px}.brand{display:flex;align-items:center;gap:16px}.brand-icon{display:grid;place-items:center;background:#086b9c;color:white;width:56px;height:56px;border-radius:17px;font-weight:800;font-size:21px;box-shadow:0 8px 20px #086b9c25}.eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:#58748b;margin-bottom:5px}.privacy{display:inline-flex;align-items:center;gap:8px;border:1px solid #bdded5;border-radius:30px;padding:7px 13px;color:#246751;background:#effaf5;font-size:13px;margin-top:16px}.privacy:before{content:'';width:7px;height:7px;background:#38a27e;border-radius:50%}.dropzone{border:2px dashed #b5cedf;border-radius:16px;background:#f6fafd;padding:26px;text-align:center;margin:18px 0}.dropzone strong{display:block;font-size:20px;margin-bottom:6px}.dropzone p{margin:6px 0;color:#5c7288}.dropzone .actions{justify-content:center;margin-top:18px}.step{display:inline-grid;place-items:center;width:29px;height:29px;background:#e4f1f8;color:#086b9c;border-radius:9px;font-size:15px;margin-right:8px}button,.upload{transition:background .15s,transform .15s;font-weight:600}button:hover:not(:disabled),.upload:hover{background:#075782;transform:translateY(-1px)}button.secondary:hover:not(:disabled){background:#d7e7f1}button:focus-visible,.upload:focus-within,select:focus-visible{outline:3px solid #61b9e4;outline-offset:3px}#status{border-radius:10px;background:#edf4fa;padding:13px 16px;font-size:14px;color:#35566e;line-height:1.7}#images:empty{display:none}figure{background:#f9fbfd;border:1px solid #e2eaf1;border-radius:12px;overflow:hidden;padding:10px}figure img{border-radius:7px}figcaption{padding:9px 0;color:#586d83}figure button{padding:7px 12px;font-size:13px}.scroll{border:1px solid #e0e8ef;border-radius:12px;margin-top:18px}th{font-size:13px;color:#567086;white-space:nowrap;padding:14px}td{padding:14px;font-size:14px}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#f6fafd}#report:empty:after{content:'ยังไม่มีข้อมูล — วางภาพ แล้วกดอ่านข้อมูลจากภาพ';display:table-cell;padding:42px 24px;color:#7a8c9d;white-space:nowrap}#summary{color:#086b9c;font-size:18px}.hint{font-size:13px;color:#6c8093;line-height:1.7}.report-toolbar{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.report-toolbar select{background:#f9fbfd}.report-toolbar label{font-size:14px}.footer{text-align:center;font-size:12px;color:#7a8fa1;margin-top:25px}@media(max-width:700px){main{padding:22px 12px}h1{font-size:27px}.card{padding:17px}.dropzone{padding:20px 12px}.brand-icon{width:46px;height:46px}.actions button,.upload{padding:11px 13px}.privacy{font-size:12px}#images{grid-template-columns:1fr}}
+.copy-button{width:156px;min-width:156px;height:44px;padding:8px 10px;white-space:nowrap;transform:none!important}.copy-button.uncertain{background:#fff0f0!important;color:#b42318!important;border:1px solid #f2a8a3}.copy-button.uncertain:hover{background:#ffe0df!important}.copy-cell{width:210px;min-width:210px}.uncertain-ref{color:#b42318;font-weight:700}.copy-reason{font-size:12px;color:#b42318;line-height:1.6;max-width:185px;margin:7px 0}.copy-count{display:block;font-size:12px;color:#526f80;margin-top:7px;font-variant-numeric:tabular-nums}
+.header-top{display:flex;justify-content:space-between;align-items:center;gap:20px}.language-switch{display:flex;gap:3px;background:#e5edf4;border:1px solid #d2e0ea;padding:4px;border-radius:12px;flex-shrink:0}.language-switch button{background:transparent;color:#567086;border-radius:8px;padding:8px 12px;font-size:13px;min-width:48px;transform:none!important}.language-switch button[aria-pressed="true"]{background:#fff;color:#086b9c;box-shadow:0 2px 6px #24496615}.brand-icon svg{width:32px;height:32px}.brand h1{font-size:30px;letter-spacing:-.5px}@media(max-width:700px){.header-top{align-items:flex-start;gap:10px}.brand{gap:10px}.brand h1{font-size:21px}.eyebrow{font-size:10px;letter-spacing:1px}.language-switch button{padding:7px;min-width:36px}.brand-icon{flex-shrink:0}}
+.copy-cell{width:260px;min-width:260px;vertical-align:top}.copy-panel{display:grid;gap:10px;max-width:235px}.copy-panel .copy-count{margin:0}.read-state{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:650;color:#21714f}.read-state:before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}.read-state.review{color:#b42318}.reason-box{padding:10px 12px;border:1px solid #f4cfcb;background:#fff7f6;border-radius:9px}.reason-box strong{font-size:12px;color:#a02a20}.reason-list{margin:6px 0 0;padding-left:17px;font-size:12px;line-height:1.7;color:#8e3b34}.reason-list li+li{margin-top:4px}.image-notes{font-size:12px;color:#64788b;line-height:1.7}.image-notes summary{cursor:pointer}.image-notes ul{margin:5px 0 0;padding-left:17px}.copy-panel .copy-button{width:100%;min-width:156px}.copy-help{font-size:12px;color:#61768a;line-height:1.7;margin:0}.read-legend{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:#5b7185}.read-legend span{padding:6px 11px;border-radius:8px;background:#f1f6f9}
+html[lang="en"] #report:empty:after{content:'No data yet — paste an image and select Read images'}html[lang="en"] .copy-button{font-size:13px}
+/* Fixed language controls and compact, touch-friendly image previews. */
+.language-switch{position:fixed;top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:100;background:#edf3f9f5;box-shadow:0 4px 18px #1b38521c;user-select:none;cursor:default;backdrop-filter:blur(12px)}.language-switch button{min-width:48px;min-height:44px;touch-action:manipulation}.header-top{padding-right:145px}.brand{min-width:0}.brand h1{overflow-wrap:anywhere}
+#images{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px}#images figure{position:relative;min-width:0;padding:8px}#images figure img{display:block;width:100%;height:112px;max-height:112px;object-fit:contain}#images figcaption{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;padding:8px 2px 2px}#images .remove-image{position:absolute;top:3px;right:3px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;background:transparent;color:#c52828;border-radius:12px;transform:none;z-index:1}#images .remove-image svg{width:26px;height:26px;padding:4px;background:#fff3f3;border:1px solid #f2b9b9;border-radius:50%;box-shadow:0 2px 5px #53131315;pointer-events:none}#images .remove-image:hover:not(:disabled) svg{background:#ffdddd;border-color:#df6b6b}.scroll{max-width:100%;overscroll-behavior-x:contain}.card{min-width:0}.copy-panel{max-width:100%}button,select{touch-action:manipulation}dialog{width:min(1100px,96vw);padding:16px}dialog::backdrop{background:#142d4c80}#closeZoom{position:sticky;top:0;z-index:1;min-height:44px}
+@media(max-width:1024px){main{padding:32px 20px 50px}.header-top{padding-right:135px}.card{padding:22px}.read-legend{line-height:1.7}}
+@media(max-width:700px){main{padding:90px 12px 32px}.header-top{padding-right:0}.brand h1{font-size:24px}.brand-icon{width:46px;height:46px}.language-switch{top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right))}.language-switch button{min-width:44px;min-height:44px}.card{padding:16px;margin:16px 0}.dropzone{padding:20px 12px}.dropzone .actions{display:grid;grid-template-columns:1fr;width:100%}.dropzone .actions>*{width:100%;min-height:46px}.dropzone strong{font-size:18px}.report-toolbar,.report-toolbar .actions{width:100%}.report-toolbar .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.report-toolbar label{display:flex;flex-direction:column;gap:5px;min-width:0}.report-toolbar select{width:100%;min-height:44px}.read-legend{display:grid;gap:6px}.footer{overflow-wrap:anywhere;padding:0 4px}#images{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#images figure img{height:96px;max-height:96px}#summary{font-size:17px}.scroll{border:0;background:transparent;overflow:visible}.scroll table,.scroll tbody{display:block;width:100%}.scroll thead{display:none}#report{display:grid;gap:14px}#report tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid #dce6ef;background:white;border-radius:12px;overflow:hidden;padding:5px}#report td{display:block;border:0;padding:10px;min-width:0;overflow-wrap:anywhere;font-size:14px;vertical-align:top}#report td:before{content:attr(data-label);display:block;color:#6b8193;font-size:12px;font-family:system-ui,sans-serif;font-weight:500;margin-bottom:5px;white-space:normal}#report td:nth-child(5),#report td:nth-child(6){grid-column:1/-1;border-top:1px solid #edf1f5}#report td:nth-child(5){background:#f7fafc;border-radius:8px;line-height:1.7}#report .copy-cell{width:auto;min-width:0}.copy-panel .copy-button{width:100%;min-width:0}.reason-box{padding:10px 12px}.image-notes summary{padding:5px 0}#report:empty:after{display:block;white-space:normal;padding:26px 12px;text-align:center}.read-state{font-size:14px}}
+@media(prefers-reduced-motion:reduce){button,.upload{transition:none}}
+</style>
+<style>
+.reference-crop{display:block;width:190px;max-width:100%;padding:4px;margin-top:8px;background:#f5f8fc;border:1px solid #d8e3ed;border-radius:7px;cursor:zoom-in;transform:none!important}.reference-crop:hover{background:#eaf2f8!important}.reference-crop img{display:block;width:100%;height:auto;max-height:58px;object-fit:contain}.crop-caption{display:block;margin-top:4px;font-size:11px;font-weight:400;color:#718295}.crop-unavailable{display:block;font-size:11px;font-weight:400;color:#718295;margin-top:7px}@media(max-width:700px){#report td:nth-child(2){min-width:0}.reference-crop{width:100%}}
+</style>
+<main>
+<header><div class="header-top"><div class="brand"><div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4H5a1 1 0 0 0-1 1v5m18-6h5a1 1 0 0 1 1 1v5M4 22v5a1 1 0 0 0 1 1h5m12 0h5a1 1 0 0 0 1-1v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11h12m-6 0v12m-4 0h8M7 17h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><div class="eyebrow">IMAGE TEXT READER</div><h1>อ่านข้อความจากภาพ</h1></div></div><nav class="language-switch" aria-label="Language"><button type="button" id="langTH" lang="th" aria-pressed="true">TH</button><button type="button" id="langEN" lang="en" aria-pressed="false">ENG</button></nav></div>
+<p class="muted">สำหรับดึงเลขบัตรออกจากรูปภาพ โดยใช้งานได้กับ สปส 01,02 และ bot 02</p>
+<p class="hint">สำหรับใช้งานส่วนตัวและภายในทีม</p>
+</header>
+<section class="card">
+<h2><span class="step">1</span>เพิ่มภาพที่ต้องการอ่าน</h2>
+<div class="dropzone"><strong>คัดลอกภาพ แล้วกด Ctrl + V</strong><p>หรือลากภาพมาวางได้เลย · สูงสุดครั้งละ 10 ภาพ</p><div class="actions"><label class="upload" tabindex="0" role="button" id="pickImages">เลือกภาพจากเครื่อง <input id="files" type="file" accept="image/*" multiple hidden></label><button id="scan" disabled>อ่านข้อมูลจากภาพ →</button></div></div>
+<p class="hint">ดูภาพต้นฉบับใต้เลขเพื่อเทียบข้อมูล กดภาพเพื่อขยาย แล้วแตะตรงไหนก็ได้เพื่อปิด ลบภาพแล้วรายงานเดิมยังอยู่</p>
+<div id="status" role="status" aria-live="polite">วางภาพที่เห็น Serv. และ Ref.2 ชัดเจนได้เลย หาก Ref.3 ถูกตัดออก จะแสดงเดือนว่าไม่ปรากฏในภาพ และยัง Copy ข้อมูล Serv. 02 ได้ เลือกตัวกรองเดือน “ทั้งหมด” เพื่อดูรายการเหล่านี้</div>
+<div id="images"></div>
+</section>
+<section class="card">
+<h2><span class="step">2</span>รายงานข้อมูล</h2>
+<p class="hint">รวม Ref.2 แยกตาม Serv. และนับเฉพาะเดือนที่อ่านได้ รายการซ้ำไม่นับเพิ่ม · Serv. 02 กด Copy เพื่อนำไปใช้ได้ทันที</p>
+<div class="report-toolbar"><div class="actions"><label>Serv. <select id="service"><option value="">ทั้งหมด</option><option>01</option><option>02</option></select></label><label>จำนวนเดือน <select id="months"><option value="">ทั้งหมด</option><option value="1">1 เดือน</option><option value="2">2 เดือน</option><option value="3">มากกว่า 2 เดือน</option></select></label></div></div>
+<p id="summary"></p>
+<div class="scroll"><table><thead><tr><th>Serv.</th><th>Ref.2</th><th>Ref.3 (เดือน)</th><th>จำนวนเดือน</th><th>ข้อความ Serv. 02</th><th>คัดลอก</th></tr></thead><tbody id="report"></tbody></table></div>
+<p id="copyStatus" role="status" aria-live="polite"></p>
+</section>
+<p class="footer">ภาพและรายงานอยู่ในหน่วยความจำชั่วคราวของหน้านี้ ไม่บันทึกลงฐานข้อมูลหรือพื้นที่เก็บถาวรของเว็บ<br>ใช้อินเทอร์เน็ตโหลด OCR · รีเฟรชหรือปิดหน้าเพื่อเริ่มใหม่ · ไม่สามารถรับประกันการลบร่องรอยในเครื่องหรือคลิปบอร์ดได้</p>
+</main>
+<dialog id="zoom"><button id="closeZoom">ปิด</button><p><img id="large" alt="ภาพต้นฉบับขยาย"></p></dialog>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+let rows=[], pictures=[], urls=[], busy=false, visible=[];
+const copyCounts=new Map();
+function cell(text){const td=document.createElement('td');td.textContent=text;return td;}
+function service02Text(ref2){return `|099400015967600\n${ref2}\n92004\n10000`;}
+async function copyService02(text,button,key){
+ let copied=false;
+ try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);copied=true;}}catch(error){}
+ if(!copied){
+  const previous=document.activeElement;
+  const input=document.createElement('textarea');input.value=text;input.readOnly=true;input.style.position='fixed';input.style.left='-9999px';document.body.append(input);input.select();
+  try{copied=document.execCommand('copy');}catch(error){}finally{input.remove();if(previous&&previous.focus)previous.focus({preventScroll:true});}
+ }
+ if(copied){copyCounts.set(key,(copyCounts.get(key)||0)+1);document.querySelectorAll('[data-copy-key]').forEach(el=>{if(el.dataset.copyKey===key)el.textContent=`คัดลอกแล้ว ${copyCounts.get(key)} ครั้ง`;});}
+ $('copyStatus').textContent=copied?'คัดลอกข้อความ 4 บรรทัดแล้ว':'คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความในคอลัมน์แล้วกด Ctrl+C';
+ button.textContent=copied?'คัดลอกแล้ว':'ลอง Copy อีกครั้ง';
+ setTimeout(()=>{button.textContent='Copy';},1800);
+}
+function valid(r){return /^(01|02)$/.test(r.serv)&&/^\d{13}$/.test(r.ref2)&&(r.ref3===''||/^(0[1-9]|1[0-2])\/\d{4}$/.test(r.ref3));}
+function monthSort(a,b){return Number(a.slice(3))-Number(b.slice(3))||Number(a.slice(0,2))-Number(b.slice(0,2));}
+function groupRows(input){
+ const groups=new Map();
+ for(const r of input){
+  if(!valid(r))continue;
+  const key=r.serv+'|'+r.ref2;
+  if(!groups.has(key))groups.set(key,{serv:r.serv,ref2:r.ref2,months:new Set(),unknown:false,verified:false,reasons:new Set(),notes:new Set()});
+  const g=groups.get(key);if(r.ref3)g.months.add(r.ref3);else g.unknown=true;
+  if(!r.uncertain)g.verified=true;
+  for(const reason of r.reasons||[])g.reasons.add(reason);
+  for(const note of r.notes||[])g.notes.add(note);
+  if(r.crop&&(!g.crop||(!r.uncertain&&!g.cropVerified))){g.crop=r.crop;g.cropVerified=!r.uncertain;}
+ }
+ return [...groups.values()].map(g=>({...g,uncertain:!g.verified,reasons:g.verified?new Set():g.reasons}));
+}
+function update(){
+ visible=groupRows(rows).map(g=>({...g,months:[...g.months].sort(monthSort)})).filter(g=>(!$('service').value||g.serv===$('service').value)&&(!$('months').value||($('months').value==='3'?g.months.length>2:g.months.length===Number($('months').value)))).sort((a,b)=>a.serv.localeCompare(b.serv)||a.ref2.localeCompare(b.ref2));
+ $('report').replaceChildren();for(const g of visible){
+  const tr=document.createElement('tr');const monthsText=g.months.length?g.months.join(', ')+(g.unknown?' (มีภาพไม่แสดงเดือน)':''):'ไม่ปรากฏในภาพ';const countText=g.months.length?(g.unknown?`${g.months.length} เดือนที่อ่านได้`:g.months.length):'ไม่ทราบ';[g.serv,g.ref2,monthsText,countText].forEach(v=>tr.append(cell(v)));
+  const referenceCell=tr.children[1];
+  if(g.crop){
+   const preview=document.createElement('button');preview.type='button';preview.className='reference-crop';preview.title='ขยายภาพเลขต้นฉบับ';preview.setAttribute('aria-label','ขยายภาพเลขต้นฉบับ');
+   const img=document.createElement('img');img.src=g.crop;img.alt='เลข Ref.2 จากภาพต้นฉบับ';preview.append(img);
+   preview.onclick=()=>{$('large').src=g.crop;$('zoom').showModal();};
+   const caption=document.createElement('span');caption.className='crop-caption';caption.textContent='ภาพต้นฉบับ · กดเพื่อขยาย';referenceCell.append(preview,caption);
+  }else{const note=document.createElement('span');note.className='crop-unavailable';note.textContent='ไม่มีภาพตัด · อ่านภาพใหม่เพื่อแสดง';referenceCell.append(note);}
+  const content=cell('—'),action=cell('—');action.className='copy-cell';
+  if(g.serv==='02'){
+   const text=service02Text(g.ref2);content.textContent=text;content.style.whiteSpace='pre';content.style.fontFamily='monospace';
+   const key=g.serv+'|'+g.ref2;
+   const button=document.createElement('button');button.type='button';button.className='copy-button';button.textContent='Copy';button.title='คัดลอกข้อความ 4 บรรทัด';button.setAttribute('aria-label',`คัดลอกข้อความ Serv. 02 Ref.2 ${g.ref2}`);button.onclick=()=>copyService02(text,button,key);
+   const panel=document.createElement('div');panel.className='copy-panel';
+   panel.append(button);
+   const counter=document.createElement('span');counter.className='copy-count';counter.dataset.copyKey=key;counter.textContent=`คัดลอกแล้ว ${copyCounts.get(key)||0} ครั้ง`;action.append(counter);
+   panel.append(counter);action.replaceChildren(panel);
+  }
+  tr.append(content,action);['Serv.','Ref.2','Ref.3 (เดือน)','จำนวนเดือน','ข้อความ Serv. 02','คัดลอก'].forEach((label,index)=>tr.children[index].setAttribute('data-label',label));$('report').append(tr);
+ }
+ $('summary').textContent=`${visible.length} กลุ่ม Ref.2 ตามตัวกรอง`;
+}
+function render(){
+ update();
+}
+function lock(value){busy=value;$('files').disabled=value;$('scan').disabled=value||!pictures.length;$('scan').textContent=value?'กำลังอ่านภาพ…':'อ่านข้อมูลจากภาพ →';document.querySelectorAll('.remove-image').forEach(b=>b.disabled=value);render();}
+function resetResults(){render();}
+function appendResults(incoming){
+ const key=r=>`${r.serv}|${r.ref2}|${r.ref3}`;
+ const known=new Set(rows.map(key));let added=0;
+ for(const row of incoming){const id=key(row);if(!known.has(id)){known.add(id);rows.push(row);added++;}else{const existing=rows.find(r=>key(r)===id);if(existing){if(row.crop&&(!existing.crop||!row.uncertain))existing.crop=row.crop;existing.notes=[...new Set([...(existing.notes||[]),...(row.notes||[])])];if(!row.uncertain){existing.uncertain=false;existing.reasons=[];}else if(existing.uncertain){existing.reasons=[...new Set([...(existing.reasons||[]),...(row.reasons||[])])];}}}}
+ return added;
+}
+function allowImageChange(){return true;}
+function renderImages(){
+ $('zoom').close();$('large').removeAttribute('src');
+ urls.forEach(URL.revokeObjectURL);urls=[];$('images').replaceChildren();
+ pictures.forEach((f,i)=>{const url=URL.createObjectURL(f);urls.push(url);const fig=document.createElement('figure'),img=document.createElement('img'),caption=document.createElement('figcaption'),remove=document.createElement('button');img.src=url;img.alt=f.name;img.onclick=()=>{$('large').src=url;$('zoom').showModal();};caption.textContent=`${i+1}. ${f.name}`;caption.title=f.name;remove.type='button';remove.innerHTML='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';remove.setAttribute('aria-label','ลบภาพนี้');remove.title='ลบภาพนี้';remove.className='remove-image';remove.disabled=busy;remove.onclick=()=>{if(busy||!allowImageChange())return;pictures.splice(i,1);resetResults();renderImages();};fig.append(img,caption,remove);$('images').append(fig);});
+ $('scan').disabled=busy||!pictures.length;$('status').textContent=`มี ${pictures.length}/10 ภาพ วางเพิ่มด้วย Ctrl+V หรือกดอ่านข้อมูลจากภาพ`;
+}
+function addImages(files){
+ if(busy){$('status').textContent='กำลังอ่านภาพ กรุณารอให้เสร็จก่อนเพิ่มภาพ';return;}
+ const selected=[...files].filter(f=>f&&f.type.startsWith('image/'));
+ if(!selected.length){$('status').textContent='ไม่พบไฟล์ภาพ กรุณาคัดลอกตัวภาพหรือเลือกไฟล์ภาพ';return;}
+ if(pictures.length+selected.length>10){$('status').textContent=`เพิ่มไม่ได้: มี ${pictures.length} ภาพแล้ว เพิ่มได้อีก ${10-pictures.length} ภาพต่อรอบ กรุณาลบภาพเดิมหรือเลือกให้น้อยลง`;return;}
+ if(!allowImageChange())return;
+ pictures.push(...selected.map((f,i)=>new File([f],`ภาพ-${pictures.length+i+1}-${f.name||'clipboard.png'}`,{type:f.type})));
+ resetResults();renderImages();
+}
+$('files').onchange=()=>{addImages($('files').files);$('files').value='';};
+document.addEventListener('paste',event=>{
+ const images=[...(event.clipboardData?.items||[])].filter(item=>item.kind==='file'&&item.type.startsWith('image/')).map(item=>item.getAsFile()).filter(Boolean);
+ if(images.length){event.preventDefault();addImages(images);}
+});
+document.addEventListener('dragover',event=>{if([...event.dataTransfer.types].includes('Files'))event.preventDefault();});
+document.addEventListener('drop',event=>{if([...event.dataTransfer.types].includes('Files')){event.preventDefault();addImages(event.dataTransfer.files);}});
+$('closeZoom').onclick=()=>$('zoom').close();
+$('zoom').addEventListener('click',()=>$('zoom').close());
+function loadOCR(){if(window.Tesseract)return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=resolve;s.onerror=()=>{s.remove();reject(new Error('โหลด OCR ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตและลองใหม่'));};document.head.append(s);});}
+function parse(text,source){
+ // Require the service, reference 1, reference 2, and month in table order.
+ // Do not guess or replace ambiguous characters inside identifiers.
+ const normalized=text.replace(/[|]/g,' ').replace(/\s*\/\s*/g,'/');
+ const re=/(?:^|\s)(0[12])\s+([A-Za-z0-9]{8,24})\s+(\d{13})(?=\s|$)(?:[ \t]+((?:0[1-9]|1[0-2])\/\d{4})(?=[,\s]|$))?/g;
+ return [...normalized.matchAll(re)].map(m=>({serv:m[1],ref2:m[3],ref3:m[4]||'',source}));
+}
+function readTable(data,source){
+ const words=(data.words||[]).filter(w=>w.bbox&&w.text.trim()).map(w=>({text:w.text.trim().replace(/^[|]+|[|]+$/g,''),confidence:Number(w.confidence)||0,...w.bbox}));
+ if(!words.length)return {rows:[],uncertain:1,mode:'ไม่มีตำแหน่งและความมั่นใจของตัวอักษร'};
+ const cx=w=>(w.x0+w.x1)/2,cy=w=>(w.y0+w.y1)/2;
+ const sameRow=(a,b)=>Math.abs(cy(a)-cy(b))<=Math.max(6,Math.min(a.y1-a.y0,b.y1-b.y0)*0.65);
+ const headers={};
+ const headerKey=text=>{const s=text.toLowerCase().replace(/[^a-z0-9]/g,'');return s==='ref2'?'ref2':s==='ref3'?'ref3':s==='serv'||s==='service'?'serv':null;};
+ for(const w of words){
+  let key=headerKey(w.text);if(key)headers[key]=w;
+  if(/^ref[.,:]?$/i.test(w.text)){
+   const next=words.filter(v=>v!==w&&sameRow(w,v)&&v.x0>=w.x1-2&&v.x0-w.x1<Math.max(30,2*(w.y1-w.y0))).sort((a,b)=>a.x0-b.x0)[0];
+   if(next&&(key=headerKey(w.text+next.text)))headers[key]={x0:w.x0,x1:next.x1,y0:w.y0,y1:w.y1};
+  }
+ }
+ const hasHeaders=Object.keys(headers).length>0;
+ const under=(w,key)=>!headers[key]||(w.y0>=headers[key].y1-2&&Math.abs(cx(w)-cx(headers[key]))<=Math.max(w.x1-w.x0,headers[key].x1-headers[key].x0)*0.65+12);
+ const month=text=>{const m=text.replace(/\s/g,'').match(/^((?:0[1-9]|1[0-2])\/\d{4})(?:,.*)?$/);return m?m[1]:null;};
+ const refs=words.filter(w=>/^\d{13}$/.test(w.text)&&under(w,'ref2'));
+ const result=[];let uncertain=0;
+ for(const ref of refs){
+  const line=words.filter(w=>sameRow(ref,w));
+  const months=line.filter(w=>month(w.text)&&under(w,'ref3'));
+  let services;
+  if(headers.serv){services=line.filter(w=>/^\d{1,2}$/.test(w.text)&&under(w,'serv'));}
+  else{
+   // Padded service codes are distinct from single-digit machine numbers.
+   services=line.filter(w=>/^(01|02|94)$/.test(w.text));
+  }
+  const codes=[...new Set(services.map(w=>w.text.padStart(2,'0')))];
+  const periods=[...new Set(months.map(w=>month(w.text)))];
+  if(codes.length===1&&codes[0]!=='01'&&codes[0]!=='02')continue;
+  const reasons=[],notes=[];
+  if(!headers.serv||!headers.ref2)notes.push('ไม่เห็นหัวตารางครบ ระบบจึงจับคู่จากข้อมูลในแถว');
+  if(ref.confidence<85)reasons.push('เลข Ref.2 ยังอ่านได้ไม่ชัด');
+  if(!services.length||services.some(w=>w.confidence<80))reasons.push('เลข Serv. ยังอ่านได้ไม่ชัด');
+  const lowConfidence=reasons.length>0;if(lowConfidence)uncertain++;
+  if(codes.length!==1){uncertain++;continue;}
+  if(periods.length!==1||months.some(w=>w.confidence<80)){
+   // A cropped or unreadable Ref.3 must not hide an otherwise clear reference.
+   // Keep the month unknown; never infer a month from another row or image.
+   if(periods.length>1)notes.push('พบหลายเดือนในแถวเดียวกัน จึงยังไม่นับเดือน');
+   else if(months.some(w=>w.confidence<80))notes.push('เดือนอ่านไม่ชัด จึงยังไม่นับเดือน');
+   else notes.push('ไม่เห็นเดือนในภาพ ยังใช้ปุ่มคัดลอกเลขได้');
+   result.push({serv:codes[0],ref2:ref.text,ref3:'',source,uncertain:lowConfidence,reasons,notes,refBox:{x0:ref.x0,y0:ref.y0,x1:ref.x1,y1:ref.y1}});
+   if(periods.length>1)uncertain++;
+   continue;
+  }
+  result.push({serv:codes[0],ref2:ref.text,ref3:periods[0],source,uncertain:lowConfidence,reasons,notes,refBox:{x0:ref.x0,y0:ref.y0,x1:ref.x1,y1:ref.y1}});
+ }
+ return {rows:result,uncertain,mode:hasHeaders?'ตำแหน่งหัวคอลัมน์':'รูปแบบข้อมูลโดยไม่มีหัวตาราง'};
+}
+function reconcileReads(first,second){
+ const group=list=>{const map=new Map();for(const r of list){const key=r.serv+'|'+r.ref2;if(!map.has(key))map.set(key,[]);map.get(key).push(r);}return map;};
+ const a=group(first.rows),b=group(second.rows),accepted=[];
+ let uncertain=first.uncertain+second.uncertain;
+ for(const key of new Set([...a.keys(),...b.keys()])){
+  if(!a.has(key)||!b.has(key)){uncertain++;accepted.push(...(a.get(key)||b.get(key)).map(r=>({...r,uncertain:true,reasons:[...new Set([...(r.reasons||[]),'พบเลขนี้เพียงรอบเดียว ยังยืนยันซ้ำไม่ได้'])]})));continue;}
+  const left=a.get(key),right=b.get(key),rightMonths=new Set(right.map(r=>r.ref3));
+  const matching=[...new Set(left.map(r=>r.ref3))].filter(m=>rightMonths.has(m));
+  const both=[...left,...right],identityUncertain=both.some(r=>r.uncertain),reasons=[...new Set(both.flatMap(r=>r.reasons||[]))],notes=[...new Set(both.flatMap(r=>r.notes||[]))];
+  for(const ref3 of matching)accepted.push({...left[0],ref3,uncertain:identityUncertain,reasons,notes});
+  const mismatch=left.some(r=>!rightMonths.has(r.ref3))||right.some(r=>!left.some(l=>l.ref3===r.ref3));
+  if(mismatch||!matching.length){
+   const monthNotes=[...new Set([...notes,'สองรอบอ่านเดือนไม่ตรงกัน จึงยังไม่ยืนยันเดือน'])];
+   const unknown=accepted.find(r=>r.serv===left[0].serv&&r.ref2===left[0].ref2&&r.ref3==='');
+   if(unknown)unknown.notes=monthNotes;else accepted.push({...left[0],ref3:'',uncertain:identityUncertain,reasons,notes:monthNotes});
+  }
+ }
+ return {rows:accepted,uncertain};
+}
+async function prepareImage(file){
+ const bitmap=await createImageBitmap(file);
+ const scale=Math.min(2,5000/Math.max(bitmap.width,bitmap.height));
+ const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+ const pixels=ctx.getImageData(0,0,canvas.width,canvas.height),p=pixels.data;
+ for(let i=0;i<p.length;i+=4){
+  const r=p[i],g=p[i+1],b=p[i+2];
+  // Remove pale table backgrounds and red frames before OCR.
+  if((r>150&&g<110&&b<110)||(r>150&&g>150&&b>150)){p[i]=p[i+1]=p[i+2]=255;}
+ }
+ ctx.putImageData(pixels,0,0);return canvas;
+}
+async function addReferenceCrops(file,prepared,resultRows){
+ const original=await createImageBitmap(file),cache=new Map();
+ try{
+  const sx=original.width/prepared.width,sy=original.height/prepared.height;
+  for(const row of resultRows){
+   const b=row.refBox;if(!b)continue;const key=[b.x0,b.y0,b.x1,b.y1].join(',');
+   if(cache.has(key)){row.crop=cache.get(key);continue;}
+   const padding=Math.max(3,(b.y1-b.y0)*0.18);
+   const x=Math.max(0,Math.floor((b.x0-padding)*sx)),y=Math.max(0,Math.floor((b.y0-padding)*sy));
+   const right=Math.min(original.width,Math.ceil((b.x1+padding)*sx)),bottom=Math.min(original.height,Math.ceil((b.y1+padding)*sy));
+   const width=right-x,height=bottom-y;if(width<=0||height<=0)continue;
+   const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+   canvas.getContext('2d').drawImage(original,x,y,width,height,0,0,width,height);
+   row.crop=canvas.toDataURL('image/png');cache.set(key,row.crop);canvas.width=0;canvas.height=0;
+  }
+ }finally{original.close();}
+}
+$('scan').onclick=async()=>{
+ lock(true);let worker,index=0,failed=0,uncertain=0,added=0,read=0;
+ try{await loadOCR();worker=await Tesseract.createWorker('eng',1,{logger:m=>{$('status').textContent=`ภาพ ${index+1}/${pictures.length}: ${m.status} ${Math.round((m.progress||0)*100)}%`;}});await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+ for(index=0;index<pictures.length;index++){
+ try{
+  const prepared=await prepareImage(pictures[index]);
+  await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+  const first=readTable((await worker.recognize(prepared)).data,pictures[index].name);
+  await worker.setParameters({tessedit_pageseg_mode:'11',preserve_interword_spaces:'1'});
+  const second=readTable((await worker.recognize(prepared)).data,pictures[index].name);
+  const found=reconcileReads(first,second);
+  await addReferenceCrops(pictures[index],prepared,found.rows);prepared.width=0;prepared.height=0;
+  read+=found.rows.length;added+=appendResults(found.rows);uncertain+=found.uncertain;render();
+ }
+ catch(error){failed++;}
+ }
+ $('status').textContent=`อ่านเทียบ 2 รอบเสร็จ • เพิ่มใหม่ ${added} รายการ • สะสม ${rows.length} รายการ • ไม่ทราบเดือน ${rows.filter(r=>!r.ref3).length} รายการ${failed?` • อ่านไม่สำเร็จ ${failed} ภาพ`:''}${!read?' • ชุดนี้ไม่พบรายการที่ระบุ Ref.2 และ Serv. ได้':''}`;
+ }catch(error){$('status').textContent='อ่านภาพไม่ได้: '+error.message;}
+ finally{try{if(worker)await worker.terminate();}finally{lock(false);}}
+};
+$('pickImages').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!busy)$('files').click();}});
+$('service').onchange=update;$('months').onchange=update;
+render();
+// Translate presentation only. OCR data, identifiers, and copy payloads stay unchanged.
+let language='th';
+const translations={
+ 'ดูภาพต้นฉบับใต้เลขเพื่อเทียบข้อมูล กดภาพเพื่อขยาย แล้วแตะตรงไหนก็ได้เพื่อปิด ลบภาพแล้วรายงานเดิมยังอยู่':'Compare the numbers with their original image crops. Tap an image to enlarge it, then tap anywhere to close. Removing images keeps the report.',
+ 'ขยายภาพเลขต้นฉบับ':'Enlarge the original number image',
+ 'เลข Ref.2 จากภาพต้นฉบับ':'Ref.2 from the original image',
+ 'ภาพต้นฉบับ · กดเพื่อขยาย':'Original image · Click to enlarge',
+ 'ไม่มีภาพตัด · อ่านภาพใหม่เพื่อแสดง':'No image crop · Read the image again',
+ 'ระบบอ่านภาพ 2 รอบแล้วเทียบเลขให้ หากเลขยังไม่ชัดจะแจ้งให้ตรวจอีกครั้ง ลบภาพแล้วรายงานเดิมยังอยู่':'The app reads each image twice and compares the numbers. Unclear numbers are marked for review. Removing images keeps your report.',
+ 'อ่านเลขตรงกัน — ทั้ง 2 รอบได้เลขเดียวกันและอ่านได้ชัด':'Matching reads — both passes read the same number clearly',
+ 'ควรตรวจเลข — ดูเหตุผลใต้ปุ่มคัดลอก':'Check the number — see the reasons below Copy',
+ 'อ่านเลขตรงกัน':'Matching reads',
+ 'ควรตรวจเลข':'Check the number',
+ 'สิ่งที่ควรตรวจ':'What to check',
+ 'เทียบเลขกับภาพก่อนนำไปใช้':'Compare the number with the image before using it',
+ 'ข้อมูลเกี่ยวกับภาพ':'About this image',
+ 'ยังยืนยันเลขจากภาพไม่ได้':'The number could not be confirmed',
+ 'ไม่เห็นหัวตารางครบ ระบบจึงจับคู่จากข้อมูลในแถว':'Headers are incomplete; values were matched within the row',
+ 'เลข Ref.2 ยังอ่านได้ไม่ชัด':'Ref.2 digits are not clear enough',
+ 'เลข Serv. ยังอ่านได้ไม่ชัด':'The service number is not clear enough',
+ 'พบหลายเดือนในแถวเดียวกัน จึงยังไม่นับเดือน':'Multiple months were found on one row; the month is not counted',
+ 'เดือนอ่านไม่ชัด จึงยังไม่นับเดือน':'The month is unclear and is not counted',
+ 'ไม่เห็นเดือนในภาพ ยังใช้ปุ่มคัดลอกเลขได้':'No month is visible; the number can still be copied',
+ 'พบเลขนี้เพียงรอบเดียว ยังยืนยันซ้ำไม่ได้':'Only one pass found this number; it could not be confirmed again',
+ 'สองรอบอ่านเดือนไม่ตรงกัน จึงยังไม่ยืนยันเดือน':'The passes disagree on the month; the month is unconfirmed',
+ 'สำหรับใช้งานส่วนตัวและภายในทีม':'For personal and internal team use',
+ 'อ่านข้อความจากภาพ':'Image Text Reader',
+ 'สำหรับดึงเลขบัตรออกจากรูปภาพ โดยใช้งานได้กับ สปส 01,02 และ bot 02':'Extract card numbers from images for SSO 01, 02 and bot 02',
+ 'เพิ่มภาพที่ต้องการอ่าน':'Add images to read',
+ 'คัดลอกภาพ แล้วกด Ctrl + V':'Copy an image, then press Ctrl + V',
+ 'หรือลากภาพมาวางได้เลย · สูงสุดครั้งละ 10 ภาพ':'Or drag and drop images here · Up to 10 images per batch',
+ 'เลือกภาพจากเครื่อง':'Choose images',
+ 'อ่านข้อมูลจากภาพ →':'Read images →',
+ 'กำลังอ่านภาพ…':'Reading images…',
+ 'ตรวจเทียบ OCR 2 รอบ · เลขที่อ่านไม่ตรงกันหรือความมั่นใจต่ำจะแสดง Ref.2 และปุ่ม Copy สีแดง โปรดเทียบกับภาพก่อนใช้ · ลบภาพแล้วรายงานเดิมยังอยู่':'Two OCR passes are compared. Uncertain Ref.2 values and Copy buttons appear in red; check them against the image before use. Removing images keeps the report.',
+ 'วางภาพที่เห็น Serv. และ Ref.2 ชัดเจนได้เลย หาก Ref.3 ถูกตัดออก จะแสดงเดือนว่าไม่ปรากฏในภาพ และยัง Copy ข้อมูล Serv. 02 ได้ เลือกตัวกรองเดือน “ทั้งหมด” เพื่อดูรายการเหล่านี้':'Paste an image with clear Serv. and Ref.2 columns. Cropped Ref.3 values are marked as unavailable; Serv. 02 can still be copied. Choose All months to include these rows.',
+ 'รายงานข้อมูล':'Data report',
+ 'รวม Ref.2 แยกตาม Serv. และนับเฉพาะเดือนที่อ่านได้ รายการซ้ำไม่นับเพิ่ม · Serv. 02 กด Copy เพื่อนำไปใช้ได้ทันที':'Group Ref.2 by service and count recognized months only. Duplicates are not counted again. Use Copy for Serv. 02.',
+ 'Ref.3 (เดือน)':'Ref.3 (months)',
+ 'จำนวนเดือน':'Month count',
+ 'มากกว่า 2 เดือน':'More than 2 months',
+ '1 เดือน':'1 month',
+ '2 เดือน':'2 months',
+ 'ทั้งหมด':'All',
+ 'ข้อความ Serv. 02':'Serv. 02 text',
+ 'คัดลอกข้อความ 4 บรรทัดแล้ว':'Copied all 4 lines',
+ 'คัดลอกข้อความ 4 บรรทัด':'Copy all 4 lines',
+ 'คัดลอกข้อความ Serv. 02 Ref.2':'Copy Serv. 02 text for Ref.2',
+ 'คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความในคอลัมน์แล้วกด Ctrl+C':'Copy failed. Select the text in the column and press Ctrl+C.',
+ 'รายการนี้ OCR ไม่มั่นใจ โปรดตรวจเลขก่อนใช้':'OCR is uncertain about this entry. Check the number before use.',
+ 'ลอง Copy อีกครั้ง':'Retry Copy',
+ 'คัดลอกแล้ว':'Copied',
+ 'คัดลอก':'Copy',
+ '* Copy · ตรวจเลข':'* Copy · Check',
+ 'OCR ไม่มั่นใจ โปรดตรวจเลขกับภาพต้นฉบับ':'OCR is uncertain. Check the number against the source image.',
+ 'ไม่มีหัวตาราง หรืออ่านหัว Serv./Ref.2 ไม่ครบ':'Headers missing or Serv./Ref.2 headers unreadable',
+ 'ตัวเลข Ref.2 อ่านไม่ชัด (ความมั่นใจต่ำ)':'Ref.2 digits unclear (low confidence)',
+ 'ตัวเลข Serv. อ่านไม่ชัด (ความมั่นใจต่ำ)':'Service digits unclear (low confidence)',
+ 'พบเดือนหลายค่าในแถวเดียวกัน':'Multiple month values found on one row',
+ 'เดือน Ref.3 อ่านไม่ชัด':'Ref.3 month unclear',
+ 'OCR พบเลขนี้เพียงรอบเดียวจาก 2 รอบ':'Number found in only one of two OCR passes',
+ 'OCR สองรอบอ่านเดือน Ref.3 ไม่ตรงกัน':'The two OCR passes disagree on Ref.3 months',
+ 'ผลอ่านไม่แน่ชัด':'Uncertain OCR result',
+ 'ไม่ปรากฏในภาพ':'Not visible in image',
+ 'มีภาพไม่แสดงเดือน':'some images have no visible month',
+ 'ไม่ทราบ':'Unknown',
+ 'ลบภาพนี้':'Remove image',
+ 'ภาพต้นฉบับขยาย':'Enlarged source image',
+ 'ปิด':'Close',
+ 'ภาพและรายงานอยู่ในหน่วยความจำชั่วคราวของหน้านี้ ไม่บันทึกลงฐานข้อมูลหรือพื้นที่เก็บถาวรของเว็บ':'Images and reports stay in this page’s temporary memory. They are not saved to a database or persistent browser storage.',
+ 'ใช้อินเทอร์เน็ตโหลด OCR · รีเฟรชหรือปิดหน้าเพื่อเริ่มใหม่ · ไม่สามารถรับประกันการลบร่องรอยในเครื่องหรือคลิปบอร์ดได้':'Internet is required to load OCR. Refresh or close the page to start over. Erasure of device or clipboard traces cannot be guaranteed.',
+ 'กำลังอ่านภาพ กรุณารอให้เสร็จก่อนเพิ่มภาพ':'Reading images. Wait until processing finishes before adding more.',
+ 'ไม่พบไฟล์ภาพ กรุณาคัดลอกตัวภาพหรือเลือกไฟล์ภาพ':'No image found. Copy an image or choose an image file.',
+ 'โหลด OCR ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ตและลองใหม่':'Could not load OCR. Check your internet connection and try again.',
+ 'อ่านภาพไม่ได้:':'Could not read image:',
+ 'อ่านเทียบ 2 รอบเสร็จ':'Two-pass OCR complete',
+ 'เพิ่มใหม่':'New entries:',
+ 'สะสม':'Total:',
+ 'ไม่ทราบเดือน':'Unknown month:',
+ 'ต้องตรวจเลข':'Needs checking:',
+ '(สีแดง)':'(red)',
+ 'อ่านไม่สำเร็จ':'Failed to read',
+ 'มีผลอ่านไม่แน่ชัด โปรดเทียบรายการสีแดงกับภาพ':'Uncertain results: compare red entries against the images',
+ 'ชุดนี้ไม่พบรายการที่ระบุ Ref.2 และ Serv. ได้':'No identifiable Ref.2 and service pairs found in this batch',
+ 'ยังไม่มีข้อมูล — วางภาพ แล้วกดอ่านข้อมูลจากภาพ':'No data yet — paste an image and select Read images'
+};
+const translationPairs=Object.entries(translations).sort((a,b)=>b[0].length-a[0].length);
+function english(text){
+ let value=text.replace(/คัดลอกแล้ว (\d+) ครั้ง/g,'Copied $1 times')
+  .replace(/(\d+) กลุ่ม Ref\.2 ตามตัวกรอง/g,'$1 Ref.2 groups matching filters')
+  .replace(/(\d+) เดือนที่อ่านได้/g,'$1 recognized months')
+  .replace(/มี (\d+)\/10 ภาพ วางเพิ่มด้วย Ctrl\+V หรือกดอ่านข้อมูลจากภาพ/g,'$1/10 images · Paste more with Ctrl+V or select Read images')
+  .replace(/เพิ่มไม่ได้: มี (\d+) ภาพแล้ว เพิ่มได้อีก (\d+) ภาพต่อรอบ กรุณาลบภาพเดิมหรือเลือกให้น้อยลง/g,'Cannot add images: $1 selected, $2 slots available. Remove existing images or select fewer files.')
+  .replace(/ภาพ (\d+)\/(\d+):/g,'Image $1/$2:')
+  .replace(/(\d+) รายการ/g,'$1 entries').replace(/(\d+) ภาพ/g,'$1 images');
+ for(const [th,en] of translationPairs)value=value.split(th).join(en);
+ return value;
+}
+const originalText=new WeakMap(),originalAttributes=new WeakMap();
+let languageObserver;
+function applyLanguage(){
+ if(languageObserver)languageObserver.disconnect();
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ let node;while(node=walker.nextNode()){
+  if(node.parentElement.closest('script,style,svg,figcaption'))continue;
+  let saved=originalText.get(node);
+  if(!saved||node.nodeValue!==saved.displayed)saved={thai:node.nodeValue};
+  saved.displayed=language==='en'?english(saved.thai):saved.thai;node.nodeValue=saved.displayed;originalText.set(node,saved);
+ }
+ for(const element of document.querySelectorAll('[title],[aria-label],[alt],[data-label]')){
+  const saved=originalAttributes.get(element)||{};
+  for(const attribute of ['title','aria-label','alt','data-label']){if(!element.hasAttribute(attribute))continue;const current=element.getAttribute(attribute);if(!saved[attribute]||current!==saved[attribute].displayed)saved[attribute]={thai:current};const item=saved[attribute];item.displayed=language==='en'?english(item.thai):item.thai;element.setAttribute(attribute,item.displayed);}
+  originalAttributes.set(element,saved);
+ }
+ document.documentElement.lang=language;
+ document.title=language==='en'?'Image Text Reader':'อ่านข้อความจากภาพ';
+ $('langTH').setAttribute('aria-pressed',String(language==='th'));$('langEN').setAttribute('aria-pressed',String(language==='en'));
+ if(languageObserver)languageObserver.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','alt','data-label']});
+}
+$('langTH').onclick=()=>{language='th';applyLanguage();};$('langEN').onclick=()=>{language='en';applyLanguage();};
+languageObserver=new MutationObserver(applyLanguage);applyLanguage();
+</script>
+</html>
